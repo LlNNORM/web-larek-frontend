@@ -1,10 +1,9 @@
 import { IProduct } from '../types';
-import { cloneTemplate } from '../utils/utils';
+import { Component } from './base/Component';
 import { IEvents } from './base/events';
 import { CDN_URL } from '../utils/constants';
 
-export class Product {
-	protected element: HTMLElement;
+export class Product extends Component<IProduct> {
 	protected events: IEvents;
     protected productCategory: HTMLElement;
     protected productTitle: HTMLElement;
@@ -12,21 +11,17 @@ export class Product {
     protected productPrice: HTMLDivElement;
 	protected productId: string;
 
-	constructor(template: HTMLTemplateElement, events: IEvents) {
+	constructor(protected container: HTMLElement, events: IEvents) {
+        super(container)
 		this.events = events;
-		this.element = cloneTemplate(template);
-        this.productCategory = this.element.querySelector('.card__category');
-        this.productTitle = this.element.querySelector('.card__title');
-		this.productImage = this.element.querySelector('.card__image');
-        this.productPrice = this.element.querySelector('.card__price');
+        this.productCategory = this.container.querySelector('.card__category');
+        this.productTitle = this.container.querySelector('.card__title');
+		this.productImage = this.container.querySelector('.card__image');
+        this.productPrice = this.container.querySelector('.card__price');
 
-		this.element.addEventListener('click', () =>
-			this.events.emit('card:select', { card: this })
+		this.container.addEventListener('click', () =>
+			this.events.emit('product:selected', { product: this })
 		);
-	}
-    render(productData:Partial<IProduct>|undefined) {
-        Object.assign(this, productData)
-		return this.element;
 	}
 
     set price(price:string) {
@@ -44,7 +39,6 @@ export class Product {
     set category(category:string) {
         this.productCategory.textContent = category;
     }
-
 
     set id(id:string) {
         this.productId = id;

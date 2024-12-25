@@ -12,7 +12,7 @@ export class ProductsData implements IProductsData {
     }
     set products(products:IProduct[]) {
         this._products = products;
-        this.events.emit('products:changed')
+        this.events.emit('products:changed');
     }
 
     get products () {
