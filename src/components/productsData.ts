@@ -31,7 +31,7 @@ export class ProductsData implements IProductsData {
         const selectedProduct = this.getProduct(productId);
         if (selectedProduct) {
             this._preview = productId;
-            this.events.emit('product:selected')
+            this.events.emit('preview:changed', { preview: this.preview })
         }
     }
 

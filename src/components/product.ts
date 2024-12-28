@@ -20,7 +20,7 @@ export class Product extends Component<IProduct> {
         this.productPrice = this.container.querySelector('.card__price');
 
 		this.container.addEventListener('click', () =>
-			this.events.emit('product:selected', { product: this })
+			this.events.emit('product:selected', { productId: this.productId })
 		);
 	}
 
