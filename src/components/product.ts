@@ -10,22 +10,29 @@ export class Product extends Component<IProduct> {
 	protected productImage: HTMLImageElement;
     protected productPrice: HTMLDivElement;
 	protected productId: string;
+    private clickHandler: () => void;
 
-	constructor(protected container: HTMLElement, events: IEvents) {
+	constructor(protected container: HTMLElement, events?: IEvents) {
         super(container)
 		this.events = events;
         this.productCategory = this.container.querySelector('.card__category');
         this.productTitle = this.container.querySelector('.card__title');
 		this.productImage = this.container.querySelector('.card__image');
         this.productPrice = this.container.querySelector('.card__price');
-
-		this.container.addEventListener('click', () =>
-			this.events.emit('product:selected', { productId: this.productId })
-		);
+        this.clickHandler = this.onClick(events);
+		this.container.addEventListener('click', this.clickHandler);
 	}
 
+    protected onClick = (events?: IEvents)=>()=>{
+        events.emit('product:selected', { productId: this.productId })
+    }
+
+    protected removeClickListener() {
+        this.container.removeEventListener('click', this.clickHandler);
+    }
+
     set price(price:string) {
-        this.productPrice.textContent = String(price);
+        this.productPrice.textContent = `${price} синапсов`;
     }
 
     set image(image:string) {
@@ -47,6 +54,6 @@ export class Product extends Component<IProduct> {
 	get id() {
 		return this.productId;
 	}
-
-	
 }
+
+// export class Product extends Component<IProduct>

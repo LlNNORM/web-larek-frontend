@@ -1,11 +1,11 @@
-export type ApiOrderResponse<Type> = {
-    id: Type;       //id заказа
-	total: number; // стоимость заказа
-};
-
 export type ApiGetResponse<Type> = {
     total: number; // количество товаров 
 	items: Type[]; //список товаров
+};
+
+export type ApiOrderResponse<Type> = {
+    id: Type;       //id заказа
+	total: number; // стоимость заказа
 };
 
 export interface IProduct {
