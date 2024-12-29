@@ -29,9 +29,8 @@ export interface IUser {
 	phone: string;
 }
 
-export interface IUserData {
-	setUserInfo(userData: IUser): void;
-	checkValidation(data: Record<keyof TPaymentDetails&TUserContacts, string>): boolean;
+export interface IUserData extends IUser{
+	checkValidation(data: Record<keyof IUser, string>): boolean;
 }
 
 export interface IOrder extends IUser {
@@ -50,8 +49,6 @@ export interface IShopAPI {
 }
 
 export type TProductInfo = Pick<IProduct, 'description'|'image'|'title'|'category'|'price'>;
-
-// export type TProductShortInfo = Pick<IProduct, 'image'|'title'|'category'|'price'>;
 
 export type TBasketProductInfo = Pick<IProduct, 'title'|'price'>;
 

@@ -1,6 +1,5 @@
 import { IEvents } from "./base/events";
 import { IProduct, IProductsData } from "../types";
-// import { constraintsCard } from "../utils/constants";
 
 
 export class ProductsData implements IProductsData {

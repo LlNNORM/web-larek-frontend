@@ -1,9 +1,8 @@
-import { IProduct } from '../types';
 import { Component } from './base/Component';
 import { IEvents } from './base/events';
 import { CDN_URL } from '../utils/constants';
 
-export class Product extends Component<IProduct> {
+export class Product<T> extends Component<T> {
 	protected events: IEvents;
     protected productCategory: HTMLElement;
     protected productTitle: HTMLElement;
@@ -56,4 +55,3 @@ export class Product extends Component<IProduct> {
 	}
 }
 
-// export class Product extends Component<IProduct>
