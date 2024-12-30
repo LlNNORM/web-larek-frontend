@@ -45,8 +45,12 @@ events.on('products:changed', () => {
 		const productInstant = new Product<IProduct>(cloneTemplate(productTemplate), events);
 		return productInstant.render(product);
 	});
-	page.render({ catalog: productsHTMLList, locked: true });
+	page.render({ catalog: productsHTMLList });
 });
+
+events.on('basket:open',()=> {
+	
+})
 
 events.on('product:selected', ({productId}:{ productId: string }) => {
   productsData.preview = productId;
@@ -80,3 +84,5 @@ events.on('preview:changed', ({preview}:{ preview: string })=> {
 		content: productPreview.render(productsData.getProduct(preview))
 	});
 })
+
+'basket:open'
