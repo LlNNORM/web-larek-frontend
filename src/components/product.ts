@@ -1,6 +1,7 @@
 import { Component } from './base/Component';
 import { IEvents } from './base/events';
 import { CDN_URL } from '../utils/constants';
+import { formatNumber } from '../utils/utils';
 
 export class Product<T> extends Component<T> {
 	protected events: IEvents;
@@ -30,8 +31,8 @@ export class Product<T> extends Component<T> {
         this.container.removeEventListener('click', this.clickHandler);
     }
 
-    set price(price:string) {
-        this.productPrice.textContent = `${price} синапсов`;
+    set price(price:number) {
+        this.productPrice.textContent = formatNumber(price);
     }
 
     set image(image:string) {

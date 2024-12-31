@@ -1,6 +1,7 @@
 import {ensureElement} from "../../utils/utils";
 import { Product } from "../Product";
 import { IProduct } from "../../types";
+import { formatNumber } from "../../utils/utils";
 
 type TProductInfo = Pick<IProduct, 'description'|'image'|'title'|'category'|'price'>;
 
@@ -9,18 +10,28 @@ interface IPreviewActions {
 }
 
 export class Preview extends Product<TProductInfo> {
-    protected orderProduct: HTMLElement;
+    protected addToBasketButton: HTMLElement;
     protected productDescription: HTMLElement;
+    protected productPrice:HTMLDivElement;
 
     constructor(container: HTMLElement, actions: IPreviewActions) {
         super(container);
 
-        this.orderProduct = ensureElement<HTMLElement>('.button', this.container);
+        this.addToBasketButton = ensureElement<HTMLElement>('.button', this.container);
         this.productDescription = this.container.querySelector('.card__text');
         this.removeClickListener();
         if (actions?.onClick) {
-            this.orderProduct.addEventListener('click', actions.onClick);
+            this.addToBasketButton.addEventListener('click', actions.onClick);
         }
+    }
+
+    set price(price:number) {
+        if (!price) this.setDisabled(this.addToBasketButton, true)
+            else {
+                this.productPrice.textContent = formatNumber(price);
+                this.setDisabled(this.addToBasketButton, false);
+        }
+
     }
 
     set description(description:string) {

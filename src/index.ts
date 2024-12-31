@@ -11,6 +11,8 @@ import { Preview } from './components/common/Preview';
 import { ensureElement } from './utils/utils';
 import { IProduct } from './types';
 import { Page } from './components/Page';
+import { Basket } from './components/common/Basket';
+import { BasketProduct } from './components/common/BasketProduct';
 // import { UserData } from './components/userData';
 
 const events: IEvents = new EventEmitter();
@@ -19,17 +21,25 @@ const api = new ShopApi(API_URL);
 // Темплейты
 const productTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const previewTemplate = ensureElement<HTMLTemplateElement>('#card-preview');
+const basketProductTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
+const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
 const successTemplate = ensureElement<HTMLTemplateElement>('#success');
+// Контейнеры
+const modalContainer = ensureElement<HTMLElement>('#modal-container');
 
-
-const page = new Page(document.body, events);
-
+// Модели данных приложения
 const productsData = new ProductsData(events);
 // const userData = new UserData(events);
 
-
-const modalContainer = document.querySelector('#modal-container') as HTMLElement
+// Переиспользуемые части интерфейса
+const page = new Page(document.body, events);
 const modal = new Modal(modalContainer, events);
+
+// Переиспользуемые части интерфейса
+const basket = new Basket(cloneTemplate(basketTemplate), events);
+
+
+
 
 
 
@@ -48,9 +58,12 @@ events.on('products:changed', () => {
 	page.render({ catalog: productsHTMLList });
 });
 
-events.on('basket:open',()=> {
-	
-})
+// events.on('basket:open',()=> {
+// 	const basket = new Basket(cloneTemplate(basketTemplate), events);
+// 	modal.render({
+// 		content: basket.render(productsData.getProduct(preview))
+// 	});
+// })
 
 events.on('product:selected', ({productId}:{ productId: string }) => {
   productsData.preview = productId;
@@ -58,24 +71,12 @@ events.on('product:selected', ({productId}:{ productId: string }) => {
 });
 
 events.on('preview:changed', ({preview}:{ preview: string })=> {
-	// console.log(productsData.getProduct(preview))
-	// const productInstant = new Product(cloneTemplate(productTemplate), events);
-	// console.log(productInstant.render(productsData.getProduct(preview)))
-	// modal.render({content:productInstant.render(productsData.getProduct(preview))})
-	// const success = new Success(cloneTemplate(successTemplate), {
-	// 	onClick: () => {
-	// 		modal.close();
-	// 		// appData.clearBasket();
-	// 		// events.emit('auction:changed');
-	// 	}
-	// });
-	// modal.render({
-	// 	content: success.render({total:50})
-	// });
-
 	const productPreview = new Preview(cloneTemplate(previewTemplate), {
 		onClick: () => {
 			modal.close();
+			productsData.basketProducts = preview;
+			console.log(productsData.getBasketProducts())
+
 			// appData.clearBasket();
 			// events.emit('auction:changed');
 		}
@@ -83,6 +84,46 @@ events.on('preview:changed', ({preview}:{ preview: string })=> {
 	modal.render({
 		content: productPreview.render(productsData.getProduct(preview))
 	});
+
+	// const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
+	// console.log(basketProduct.render({price:12, title: 'лох', index:1}))
+	// modal.render({
+	// 		content: basketProduct.render({price:12, title: 'лох', index:1})
+	// 	});
+	// 	productsData.basketProducts = preview;
+	// 	productsData.getBasketProducts();
+	// basket.items = productsData.getBasketProducts().map(item => {
+	// 	const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
+	// 	return basketProduct.render({price:12, title: 'лох', index:1});
+	// })
+	// basket.total = 50;
+	// console.log(basket.items)
+
+	// modal.render({
+	// 	content: basket.render()
+	// });
+
 })
 
-'basket:open'
+events.on('basket:open',()=> {
+	basket.items = productsData.getBasketProducts().map((item,index) => {
+			const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
+			return basketProduct.render({...item,index});
+		})
+		basket.total = productsData.getBasketTotal();
+		console.log(basket.items)
+	
+		modal.render({
+			content: basket.render()
+		});
+})
+
+// Блокируем прокрутку страницы если открыта модалка
+events.on('modal:open', () => {
+    page.locked = true;
+});
+
+// ... и разблокируем
+events.on('modal:close', () => {
+    page.locked = false;
+});
