@@ -14,10 +14,7 @@ getProducts(): Promise<IProduct[]> {
 }
 
 createOrder(order: IOrder): Promise<OrderResult> {
-    return this.post<ApiOrderResponse<string>>(API_ENDPOINTS.ORDER, order).then(response => ({
-        id: response.id,
-        total: response.total
-    }));
+    return this.post<ApiOrderResponse<string>>(API_ENDPOINTS.ORDER, order)
 }
 
 }

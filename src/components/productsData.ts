@@ -1,8 +1,5 @@
 import { IEvents } from "./base/events";
-import { IProduct, IProductsData } from "../types";
-
-
-type TBasketProductInfo = Pick<IProduct, 'title'|'price'>;
+import { IProduct, IProductsData, TBasketProductInfo } from "../types";
 
 export class ProductsData implements IProductsData {
    protected _products: IProduct[];
@@ -22,12 +19,23 @@ export class ProductsData implements IProductsData {
         return this._products;
     }
 
-    getProduct(productId: string | null) {
+    getProduct(productId: string) {
         return this._products.find((item) => item.id === productId)
     }
 
     getBasketProducts() {
        return this._basketProducts
+    }
+
+    deleteBasketProduct(productId: string) {
+        this._basketProducts=this._basketProducts.filter(item => item.id!==productId)
+        console.log(this._basketProducts)
+        this.events.emit('basket:changed')
+        
+    }
+
+    getOrderButtonState (productId: string) {
+        if (this.getBasketProducts().some(item => item.id === productId)) return true
     }
 
     getBasketTotal () {
@@ -39,11 +47,15 @@ export class ProductsData implements IProductsData {
 
     }
 
+    clearBasket () {
+        this._basketProducts = []
+    }
+
     set basketProducts(productId: string | null) {
         if (productId) {
-            const {title, price} = this.getProduct(productId);
-            console.log({title, price})
-            this._basketProducts = [...this._basketProducts, {title, price}]
+            const {id, title, price} = this.getProduct(productId);
+            console.log({id, title, price})
+            this._basketProducts = [...this._basketProducts, {id, title, price}]
         }
     }
 

@@ -22,21 +22,31 @@ export interface IProductsData {
     preview:string|null;
 }
 
-export interface IUser {
+export interface IOrderForm {
 	payment: string;
 	address: string;
     email: string;
 	phone: string;
 }
 
-export interface IUserData extends IUser{
-	checkValidation(data: Record<keyof IUser, string>): boolean;
-}
-
-export interface IOrder extends IUser {
-	items: Pick<IProduct, 'id'>[]; //список id товаров
+export interface IOrder extends IOrderForm {
+	items: string[]; //список id товаров
 	total:number; // стоимость заказа
 }
+
+export interface IOrderData extends IOrderForm{
+	order:IOrder;
+	validateOrder(data: Record<keyof IOrderForm, string>): boolean;
+}
+
+// export interface IOrderForm {
+//     payment: string;
+// 	address: string;
+//     email: string;
+// 	phone: string;
+// }
+
+
 
 export interface OrderResult {
 	id: string;
@@ -50,11 +60,7 @@ export interface IShopAPI {
 
 export type TProductInfo = Pick<IProduct, 'description'|'image'|'title'|'category'|'price'>;
 
-export type TBasketProductInfo = Pick<IProduct, 'title'|'price'>;
-
-export type TPaymentDetails = Pick<IUser, 'payment'|'address'>;
-
-export type TUserContacts = Pick<IUser, 'email'|'phone'>;
+export type TBasketProductInfo = Pick<IProduct, 'id'|'title'|'price'>;
 
 export type TOrderCost= Pick<IOrder, 'total'>
 

@@ -3,7 +3,15 @@ import { Product } from "../Product";
 import { IProduct } from "../../types";
 import { formatNumber } from "../../utils/utils";
 
-type TProductInfo = Pick<IProduct, 'description'|'image'|'title'|'category'|'price'>;
+type TProductInfo = {
+    id:string;
+    description: string;
+    image: string;
+    title: string;
+    category: string;
+    price: number|null;
+    buttonState:boolean;
+}
 
 interface IPreviewActions {
     onClick: () => void;
@@ -25,13 +33,19 @@ export class Preview extends Product<TProductInfo> {
         }
     }
 
+    set buttonState (changed:boolean) {
+        if (changed) {
+            this.addToBasketButton.textContent = 'Удалить из корзины'
+        }  else this.addToBasketButton.textContent = 'В корзину'
+    }
+
     set price(price:number) {
         if (!price) this.setDisabled(this.addToBasketButton, true)
             else {
                 this.productPrice.textContent = formatNumber(price);
                 this.setDisabled(this.addToBasketButton, false);
         }
-
+        this.productPrice.textContent = formatNumber(price);
     }
 
     set description(description:string) {

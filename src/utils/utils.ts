@@ -16,6 +16,12 @@ export function formatNumber(x: number) {
     
 }
 
+export function formatBasketTotal(x: number) {
+    if (!x) return `0 синапсов`
+    else return `${x} синапсов`;
+    
+}
+
 export type SelectorCollection<T> = string | NodeListOf<Element> | T[];
 
 export function ensureAllElements<T extends HTMLElement>(selectorElement: SelectorCollection<T>, context: HTMLElement = document as unknown as HTMLElement): T[] {

@@ -1,5 +1,5 @@
 import {Component} from "../base/Component";
-import {createElement, ensureElement, formatNumber} from "../../utils/utils";
+import {createElement, ensureElement, formatBasketTotal} from "../../utils/utils";
 import {IEvents} from "../base/events";
 import { Product } from "../Product";
 import { IBasketProduct } from "./BasketProduct";
@@ -12,20 +12,21 @@ interface IBasketView {
 export class Basket extends Component<IBasketView> {
     protected _list: HTMLElement;
     protected _total: HTMLElement;
-    protected _button: HTMLElement;
+    protected confirmButton: HTMLButtonElement;
 
     constructor(container: HTMLElement, protected events: IEvents) {
         super(container);
 
         this._list = ensureElement<HTMLElement>('.basket__list', this.container);
         this._total = this.container.querySelector('.basket__price');
-        this._button = this.container.querySelector('.button');
+        this.confirmButton = this.container.querySelector('.basket__button');
 
-        if (this._button) {
-            this._button.addEventListener('click', () => {
+        if (this.confirmButton) {
+            this.confirmButton.addEventListener('click', () => {
                 events.emit('order:open');
             });
         }
+
 
         this.items = [];
     }
@@ -33,20 +34,16 @@ export class Basket extends Component<IBasketView> {
     set items(items: HTMLElement[]) {
         if (items.length) {
             this._list.replaceChildren(...items);
-            this.setDisabled(this._button, false);
+            this.setDisabled(this.confirmButton, false);
         } else {
             this._list.replaceChildren(createElement<HTMLParagraphElement>('p', {
                 textContent: 'Корзина пуста'
             }));
-            this.setDisabled(this._button, true);
+            this.setDisabled(this.confirmButton, true);
         }
     }
 
-    // get items() :HTMLElement|string {
-    //     return this._list
-    // }
-
     set total(total: number) {
-        this.setText(this._total, formatNumber(total));
+        this.setText(this._total, formatBasketTotal(total));
     }
 }

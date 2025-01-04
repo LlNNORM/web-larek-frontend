@@ -8,14 +8,16 @@ import { cloneTemplate } from './utils/utils';
 import { Modal } from './components/common/Modal';
 import { Success } from './components/common/Success';
 import { Preview } from './components/common/Preview';
+import { Order } from './components/Order';
 import { ensureElement } from './utils/utils';
 import { IProduct } from './types';
 import { Page } from './components/Page';
 import { Basket } from './components/common/Basket';
 import { BasketProduct } from './components/common/BasketProduct';
-// import { UserData } from './components/userData';
+import { IOrderForm } from './types';
+import { OrderData } from './components/OrderData';
 
-const events: IEvents = new EventEmitter();
+const events = new EventEmitter();
 const api = new ShopApi(API_URL);
 
 // Темплейты
@@ -24,22 +26,29 @@ const previewTemplate = ensureElement<HTMLTemplateElement>('#card-preview');
 const basketProductTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
 const successTemplate = ensureElement<HTMLTemplateElement>('#success');
+const detailsTemplate = ensureElement<HTMLTemplateElement>('#details');
+const contactsTemplate = ensureElement<HTMLTemplateElement>('#order');
+
 // Контейнеры
 const modalContainer = ensureElement<HTMLElement>('#modal-container');
 
 // Модели данных приложения
 const productsData = new ProductsData(events);
-// const userData = new UserData(events);
+const orderData = new OrderData(events);
 
 // Переиспользуемые части интерфейса
 const page = new Page(document.body, events);
 const modal = new Modal(modalContainer, events);
+const detailsForm = new Order(cloneTemplate(detailsTemplate),events);
+const contactsForm = new Order(cloneTemplate(contactsTemplate),events);
 
 // Переиспользуемые части интерфейса
 const basket = new Basket(cloneTemplate(basketTemplate), events);
 
 
-
+events.onAll(({ eventName, data }) => {
+    console.log(eventName, data);
+})
 
 
 
@@ -58,12 +67,6 @@ events.on('products:changed', () => {
 	page.render({ catalog: productsHTMLList });
 });
 
-// events.on('basket:open',()=> {
-// 	const basket = new Basket(cloneTemplate(basketTemplate), events);
-// 	modal.render({
-// 		content: basket.render(productsData.getProduct(preview))
-// 	});
-// })
 
 events.on('product:selected', ({productId}:{ productId: string }) => {
   productsData.preview = productId;
@@ -74,34 +77,16 @@ events.on('preview:changed', ({preview}:{ preview: string })=> {
 	const productPreview = new Preview(cloneTemplate(previewTemplate), {
 		onClick: () => {
 			modal.close();
-			productsData.basketProducts = preview;
+			if (productsData.getBasketProducts().some(item => item.id === preview)) {
+				productsData.deleteBasketProduct(preview)
+			} else productsData.basketProducts = preview;
+			
 			console.log(productsData.getBasketProducts())
-
-			// appData.clearBasket();
-			// events.emit('auction:changed');
 		}
 	});
 	modal.render({
-		content: productPreview.render(productsData.getProduct(preview))
+		content: productPreview.render({...productsData.getProduct(preview), buttonState: productsData.getOrderButtonState(preview)})
 	});
-
-	// const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
-	// console.log(basketProduct.render({price:12, title: 'лох', index:1}))
-	// modal.render({
-	// 		content: basketProduct.render({price:12, title: 'лох', index:1})
-	// 	});
-	// 	productsData.basketProducts = preview;
-	// 	productsData.getBasketProducts();
-	// basket.items = productsData.getBasketProducts().map(item => {
-	// 	const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
-	// 	return basketProduct.render({price:12, title: 'лох', index:1});
-	// })
-	// basket.total = 50;
-	// console.log(basket.items)
-
-	// modal.render({
-	// 	content: basket.render()
-	// });
 
 })
 
@@ -117,6 +102,85 @@ events.on('basket:open',()=> {
 			content: basket.render()
 		});
 })
+
+events.on('product:delete', ({productId}:{ productId: string }) => {
+	productsData.deleteBasketProduct(productId)
+	console.log(productId);
+  });
+
+events.on('basket:changed', () => {
+	basket.items = productsData.getBasketProducts().map((item,index) => {
+		const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
+		return basketProduct.render({...item,index});
+	})
+	basket.total = productsData.getBasketTotal();
+	console.log(basket.items);
+	basket.render()
+  });
+  
+
+events.on('order:open',()=> {
+
+		modal.render({
+			content: detailsForm.render({
+				payment:'',
+				valid: false,
+				errors: []
+			})
+		});
+})
+
+events.on('details:submit',()=> {
+	modal.render({
+		content: contactsForm.render({
+			phone: '',
+			email: '',
+			valid: false,
+			errors: []
+		})
+	});
+
+})
+
+// Отправлена форма заказа
+events.on('order:submit', () => {
+    api.createOrder(orderData.order)
+        .then((result) => {
+            const success = new Success(cloneTemplate(successTemplate), {
+                onClick: () => {
+                    modal.close();
+                    productsData.clearBasket();
+                }
+            });
+            modal.render({
+                content: success.render({total:result.total})
+            });
+        })
+        .catch(err => {
+            console.error(err);
+        });
+});
+
+// Изменилось состояние валидации формы
+events.on('formErrors:changed', (errors: Partial<IOrderForm>) => {
+    const {payment, address, email, phone } = errors;
+	detailsForm.valid = !payment&&!address;
+	detailsForm.errors = Object.values({payment, address}).filter(i => !!i).join('; ');
+    contactsForm.valid = !email && !phone;
+    contactsForm.errors = Object.values({phone, email}).filter(i => !!i).join('; ');
+});
+
+// Изменилось одно из полей
+events.on(/^details|order\..*:change/, (data: { field: keyof IOrderForm, value: string }) => {
+	if (data) {
+        orderData.setOrderField(data.field, data.value);
+	    // Если поле — payment, обновляем состояние кнопок
+		if (data.field === 'payment') {
+			detailsForm.payment = data.value; // Устанавливаем активное состояние кнопок
+		}
+    }
+    
+});
 
 // Блокируем прокрутку страницы если открыта модалка
 events.on('modal:open', () => {

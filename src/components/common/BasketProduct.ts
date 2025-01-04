@@ -20,6 +20,12 @@ export class BasketProduct extends Product<IBasketProduct> {
         super(container, events);
         this._index = ensureElement<HTMLElement>(`.basket__item-index`, container);
         this.deleteButton = ensureElement<HTMLButtonElement>(`.basket__item-delete`, container);
+        this.removeClickListener();
+        if (this.deleteButton) {
+            this.deleteButton.addEventListener('click', () => {
+                events.emit('product:delete', { productId: this.productId });
+            });
+        }
 
     }
 
