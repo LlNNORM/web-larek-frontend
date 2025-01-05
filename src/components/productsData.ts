@@ -3,7 +3,6 @@ import { IProduct, IProductsData} from "../types";
 
 export class ProductsData implements IProductsData {
    protected _products: IProduct[];
-
    protected _preview: string | null;
    protected events: IEvents;
    constructor(events: IEvents) {

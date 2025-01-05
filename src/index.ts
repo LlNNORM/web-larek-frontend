@@ -77,7 +77,7 @@ events.on('preview:changed', ({preview}:{ preview: string })=> {
 		onClick: () => {
 			modal.close();
 			if (orderData.getBasketProducts().some(item => item.id === preview)) {
-				orderData.deleteBasketProduct(preview)
+				orderData.deleteBasketProduct(preview);
 				page.render({ counter: orderData.decreaseBasketCounter() })
 			} else {
 				const {id, title, price} = productsData.getProduct(preview);
@@ -105,7 +105,8 @@ events.on('basket:open',()=> {
 })
 
 events.on('product:delete', ({productId}:{ productId: string }) => {
-	orderData.deleteBasketProduct(productId)
+	orderData.deleteBasketProduct(productId);
+	basket.total = orderData.getBasketTotal();
 	page.render({ counter: orderData.decreaseBasketCounter() })
   });
 
@@ -114,7 +115,6 @@ events.on('basket:changed', () => {
 		const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
 		return basketProduct.render({...item,index});
 	})
-	basket.total = orderData.getBasketTotal();
 	basket.render()
   });
   
@@ -150,9 +150,12 @@ events.on('order:submit', () => {
             const success = new Success(cloneTemplate(successTemplate), {
                 onClick: () => {
                     modal.close();
-                    orderData.clearBasket();
+					
                 }
             });
+			orderData.counter=0
+			page.render({ counter: orderData.counter })
+			orderData.clearBasket();
             modal.render({
                 content: success.render({total:result.total})
             });

@@ -47,14 +47,14 @@ yarn build
 
 ## Описание проекта
 
-Проект "Веб-ларек" реализует пример типового сервиса для покупки товаров. Пользователь может просматривать каталог товаров, при клике на товар отрывать модальное окно с его полным описанием, также при помощи открывшегося модального окна добавлять товар в корзину, при оформлении заказа пользователь может выбрать способ оплаты. Проект реализован на TypeScript и представляет собой SPA (Single Page Application) с использованием API для получения данных о товарах.
+Проект "Веб-ларек" реализует пример типового сервиса для покупки товаров. Пользователь может просматривать каталог товаров, при клике на товар отрывать модальное окно с его полным описанием, также при помощи открывшегося модального окна добавлять товар в корзину, удалять его через данную форму,если он уже содержится в корзине, при оформлении заказа пользователь может выбрать способ оплаты, указать адрес, имейл и номер мобильного телефона. При нажатии на корзину открывается модальное окно корзины, с кратким описанием добавленных в нее товаров, товар также может быть удален из корзины. Проект реализован на TypeScript и представляет собой SPA (Single Page Application) с использованием API для получения данных о товарах.
 
 ## Данные и типы данных используемые в проекте
 
 Продукт
 
 ```typescript
-export interface IProduct {
+interface IProduct {
 	id:string,
     description: string,
     image: string,
@@ -63,21 +63,11 @@ export interface IProduct {
     price: number|null
 }
 ```
-Пользователь
+
+Заказ. Данный интерфейс расширяет IOrderForm
 
 ```typescript
-export interface IUser {
-	payment: string;
-	address: string;
-    email: string;
-	phone: string;
-}
-```
-
-Заказ. Данный интерфейс расширяет интерфейс пользователя
-
-```typescript
-export interface IOrder extends IUser {
+interface IOrder extends IOrderForm {
 	items: Pick<IProduct, 'id'>[]; //список id товаров
 	total:number; // стоимость заказа
 }
@@ -86,7 +76,7 @@ export interface IOrder extends IUser {
 API для получения продуктов и отправки заказа
 
 ```typescript
-export interface IShopAPI {
+interface IShopAPI {
 	getProducts: () => Promise<IProduct[]>;
 	createOrder: (order: IOrder) => Promise<OrderResult>;
 }
@@ -94,7 +84,7 @@ export interface IShopAPI {
 Интерфейс с дженериком для получения данных от API
 
 ```typescript
-export type ApiGetResponse<Type> = {
+type ApiGetResponse<Type> = {
     total: number; // количество товаров 
 	items: Type[]; //список товаров
 };
@@ -103,15 +93,16 @@ export type ApiGetResponse<Type> = {
 Интерфейс с дженериком для отправки заказа через API, в таком формате придет ответ от сервера
 
 ```typescript
-export type ApiOrderResponse<Type> = {
+type ApiOrderResponse<Type> = {
     id: Type;       //id заказа
 	total: number; // стоимость заказа
 };
 ```
 
 Интерфейс для данных, которые мы получим после обработки ответа от сервера. Здесь мы точно знаем с каким типом данных для id будем работать, таким образом не приходится тянуть дженерики в интерфейс IShopAPI
+
 ```typescript
-export interface OrderResult {
+interface OrderResult {
 	id: string;
 	total:number;
 }
@@ -120,46 +111,58 @@ export interface OrderResult {
 Интерфейс для модели данных продуктов
 
 ```typescript
-export interface IProductsData {
+interface IProductsData {
     products:IProduct[];
     preview:string|null; //сохранение id, выбранной для отображения карточки продукта
+	getProduct(productId: string):IProduct;
+}
+```
+
+Интерфейс для модели данных заказа
+
+```typescript
+interface IOrderData extends IOrderForm{
+	order:IOrder;
+	counter:number;
+	increaseBasketCounter ():void;
+	decreaseBasketCounter ():void;
+	getBasketProducts():TBasketProductInfo[];
+	deleteBasketProduct(productId: string):void;
+	getBasketTotal ():number;
+	clearBasket ():void;
+	getOrderButtonState (productId: string):boolean;
+	setOrderField(field: keyof IOrderForm, value: string):void;
+	validateOrder():boolean;
 }
 ```
 
 Данные продукта, используемые в модальном окне отображения полной информации о продукте
 
 ```typescript
-export type TProductInfo = Pick<IProduct, 'description'|'image'|'title'|'category'|'price'>;
+type TProductInfo = Pick<IProduct, 'description'|'image'|'title'|'category'|'price'>;
 ```
 
 Данные продукта, используемые в модальном окне корзины
 
 ```typescript
-export type TBasketProductInfo = Pick<IProduct, 'title'|'price'>;
+type TBasketProductInfo = Pick<IProduct, 'id'|'title'|'price'>;
 ```
 
-Данные пользователя, используемые в модальном окне для заполнения деталей заказа
+Данные, принимаемые с форм заказа
 
 ```typescript
-export type TPaymentDetails = Pick<IUser, 'payment'|'address'>;
-```
-
-Данные пользователя, используемые в модальном окне для заполнения контактов пользователя
-
-```typescript
-export type TUserContacts = Pick<IUser, 'email'|'phone'>;
-```
-
-Данные заказа, используемые в модальном окне успешной оплаты
-
-```typescript
-export type TOrderCost= Pick<IOrder, 'total'>
+interface IOrderForm {
+	payment: string;
+	address: string;
+    email: string;
+	phone: string;
+}
 ```
 
 Данные заказа, используемые в модальном окне успешной оплаты
 
 ```typescript
-export type TOrderCost= Pick<IOrder, 'total'>
+type TOrderCost= Pick<IOrder, 'total'>
 ```
 
 ## Архитектура проекта (MVP)
@@ -221,10 +224,22 @@ export type TOrderCost= Pick<IOrder, 'total'>
         items: [],
         total: 0
     };
+- _counter: number=0 - Счетчик товаров корзины.
+- _basketProducts: TBasketProductInfo[]=[] - Список товаров корзины.
+- formErrors: FormErrors = {} - Объект, содержащий ошибки валидации форм.
 - events: IEvents - экземпляр класса `EventEmitter` для инициации событий при изменении данных.
 Методы:
 - checkValidation(data: Record<keyof IUser, string>): boolean - проверяет объект с данными пользователя на валидность
-- а также сеттеры и геттеры для сохранения и получения данных из полей класса
+- increaseBasketCounter () - увеличение счетчика корзины
+- decreaseBasketCounter () - уменьшение счетчика корзины
+- getBasketProducts() - получение продуктов, находящихся в корзине
+- deleteBasketProduct(productId: string) - удаление продукта из корзины
+- getBasketTotal () - получение полной стоимости корзины
+- clearBasket () - очистка корзины после успешного заказа
+- getOrderButtonState (productId: string) - получение состояния кнопки, находящейся в превью. Если false, то надпись `В корзину`, а если true, то `Удалить из корзины`
+- setOrderField(field: keyof IOrderForm, value: string) - устанавливает в модели данных полученные из форм значения полей заказа 
+- validateOrder() - валидация заказа, создает событие 'order:ready', если все поля форм валидны
+- а также сеттеры для сохранения данных полей класса
 
 ### Классы представления
 Все классы представления отвечают за отображение внутри контейнера (DOM-элемент) передаваемых в них данных.
@@ -245,6 +260,9 @@ export type TOrderCost= Pick<IOrder, 'total'>
 
 #### Класс Basket
 Расширяет класс `Component`. Предназначен для генерации контента модального окна, содержащего краткую информацию о товаре, находящемся в корзине. Содержит сеттеры для задания содержимого корзины и итоговой стоимости заказа.
+
+#### Класс BasketProduct
+Расширяет класс `Product`. Предназначен для генерации списка товаров для отображения в корзине. Сгенерированный данным классом списов передается в контентную часть класса Basket. Содержит сеттер для задания индекса товара.
 
 #### Класс Form
 Расширяет класс `Component`, служит основой для класса Order.

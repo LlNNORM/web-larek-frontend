@@ -1,11 +1,9 @@
 import { IOrderForm, IOrder } from "../types";
 import { IEvents } from "./base/events";
 import { TBasketProductInfo } from "../types";
+import { IOrderData } from "../types";
 
-interface IOrderData extends IOrderForm{
-	order:IOrder;
-	validateOrder(data: Record<keyof IOrderForm, string>): boolean;
-}
+
 export type FormErrors = Partial<Record<keyof IOrder, string>>;
 
 export class OrderData implements IOrderData {
@@ -21,15 +19,15 @@ export class OrderData implements IOrderData {
         items: [],
         total: 0
     };
-    protected _counter: number ;
+    protected _counter: number;
+    protected _basketProducts: TBasketProductInfo[];
     formErrors: FormErrors = {};
     protected events: IEvents;
-    protected _basketProducts: TBasketProductInfo[];
 
     constructor(events: IEvents) {
         this.events = events;
         this._basketProducts=[];
-        this._counter = 0;
+        this._counter=0;
         }
 
     set basketProducts(basketProduct: TBasketProductInfo) {
@@ -37,6 +35,14 @@ export class OrderData implements IOrderData {
             this._basketProducts = [...this._basketProducts, basketProduct];
             this.order['items'] = [...this.order['items'], basketProduct.id];
         }
+    }
+
+    set counter (counter: number) {
+        this._counter = counter;
+    }
+
+    get counter () {
+        return this._counter
     }
 
     set payment (payment: string) {
@@ -68,7 +74,8 @@ export class OrderData implements IOrderData {
      }
 
     deleteBasketProduct(productId: string) {
-        this._basketProducts=this._basketProducts.filter(item => item.id!==productId)
+        this._basketProducts=this._basketProducts.filter(item => item.id!==productId);
+        this.order['items'] = this.order['items'].filter(item => item!==productId);
         console.log(this._basketProducts)
         this.events.emit('basket:changed')
         
@@ -84,7 +91,8 @@ export class OrderData implements IOrderData {
     }
 
     clearBasket () {
-        this._basketProducts = []
+        this._basketProducts = [];
+        this.order['items'] =[];
     }
 
     getOrderButtonState (productId: string) {
@@ -100,6 +108,7 @@ export class OrderData implements IOrderData {
     }
 
     validateOrder() {
+        console.log(this.order)
         const errors: typeof this.formErrors = {};
         if (!this.order.payment) {
             errors.payment = 'Необходимо указать способ оплаты';

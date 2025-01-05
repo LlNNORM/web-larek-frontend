@@ -20,6 +20,7 @@ export interface IProduct {
 export interface IProductsData {
     products:IProduct[];
     preview:string|null;
+	getProduct(productId: string):IProduct;
 }
 
 export interface IOrderForm {
@@ -34,16 +35,20 @@ export interface IOrder extends IOrderForm {
 	total:number; // стоимость заказа
 }
 
+export interface IOrderData extends IOrderForm{
+	order:IOrder;
+	counter: number;
+	increaseBasketCounter ():void;
+	decreaseBasketCounter ():void;
+	getBasketProducts():TBasketProductInfo[];
+	deleteBasketProduct(productId: string):void;
+	getBasketTotal ():number;
+	clearBasket ():void;
+	getOrderButtonState (productId: string):boolean;
+	setOrderField(field: keyof IOrderForm, value: string):void;
+	validateOrder():boolean;
 
-
-// export interface IOrderForm {
-//     payment: string;
-// 	address: string;
-//     email: string;
-// 	phone: string;
-// }
-
-
+}
 
 export interface OrderResult {
 	id: string;
