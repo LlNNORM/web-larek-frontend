@@ -17,7 +17,7 @@ export class Modal extends Component<IModalData> {
         this._content = ensureElement<HTMLElement>('.modal__content', container);
 
         this.closeButton.addEventListener('click', this.close.bind(this));
-        
+        //Это гарантирует, что клики внутри  контентной части модального окна теперь не вызовут его закрытие
         this.container.addEventListener('click', (event) => {
             if (event.target === this.container) {
                 this.close();
