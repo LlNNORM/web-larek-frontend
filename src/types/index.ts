@@ -34,10 +34,7 @@ export interface IOrder extends IOrderForm {
 	total:number; // стоимость заказа
 }
 
-export interface IOrderData extends IOrderForm{
-	order:IOrder;
-	validateOrder(data: Record<keyof IOrderForm, string>): boolean;
-}
+
 
 // export interface IOrderForm {
 //     payment: string;

@@ -70,51 +70,51 @@ events.on('products:changed', () => {
 
 events.on('product:selected', ({productId}:{ productId: string }) => {
   productsData.preview = productId;
-  console.log(productId);
 });
 
 events.on('preview:changed', ({preview}:{ preview: string })=> {
 	const productPreview = new Preview(cloneTemplate(previewTemplate), {
 		onClick: () => {
 			modal.close();
-			if (productsData.getBasketProducts().some(item => item.id === preview)) {
-				productsData.deleteBasketProduct(preview)
-			} else productsData.basketProducts = preview;
-			
-			console.log(productsData.getBasketProducts())
+			if (orderData.getBasketProducts().some(item => item.id === preview)) {
+				orderData.deleteBasketProduct(preview)
+				page.render({ counter: orderData.decreaseBasketCounter() })
+			} else {
+				const {id, title, price} = productsData.getProduct(preview);
+				const basketProduct = {id, title, price};
+				orderData.basketProducts = basketProduct;
+				page.render({ counter: orderData.increaseBasketCounter() });
+			}
 		}
 	});
 	modal.render({
-		content: productPreview.render({...productsData.getProduct(preview), buttonState: productsData.getOrderButtonState(preview)})
+		content: productPreview.render({...productsData.getProduct(preview), buttonState: orderData.getOrderButtonState(preview)})
 	});
 
 })
 
 events.on('basket:open',()=> {
-	basket.items = productsData.getBasketProducts().map((item,index) => {
+	basket.items = orderData.getBasketProducts().map((item,index) => {
 			const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
 			return basketProduct.render({...item,index});
 		})
-		basket.total = productsData.getBasketTotal();
-		console.log(basket.items)
-	
+		basket.total = orderData.getBasketTotal();
 		modal.render({
 			content: basket.render()
 		});
 })
 
 events.on('product:delete', ({productId}:{ productId: string }) => {
-	productsData.deleteBasketProduct(productId)
-	console.log(productId);
+	orderData.deleteBasketProduct(productId)
+	page.render({ counter: orderData.decreaseBasketCounter() })
   });
 
 events.on('basket:changed', () => {
-	basket.items = productsData.getBasketProducts().map((item,index) => {
+	basket.items = orderData.getBasketProducts().map((item,index) => {
 		const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
 		return basketProduct.render({...item,index});
 	})
-	basket.total = productsData.getBasketTotal();
-	console.log(basket.items);
+	basket.total = orderData.getBasketTotal();
 	basket.render()
   });
   
@@ -124,6 +124,7 @@ events.on('order:open',()=> {
 		modal.render({
 			content: detailsForm.render({
 				payment:'',
+				address:'',
 				valid: false,
 				errors: []
 			})
@@ -149,7 +150,7 @@ events.on('order:submit', () => {
             const success = new Success(cloneTemplate(successTemplate), {
                 onClick: () => {
                     modal.close();
-                    productsData.clearBasket();
+                    orderData.clearBasket();
                 }
             });
             modal.render({
@@ -171,7 +172,7 @@ events.on('formErrors:changed', (errors: Partial<IOrderForm>) => {
 });
 
 // Изменилось одно из полей
-events.on(/^details|order\..*:change/, (data: { field: keyof IOrderForm, value: string }) => {
+events.on(/^details|order\..*:changed/, (data: { field: keyof IOrderForm, value: string }) => {
 	if (data) {
         orderData.setOrderField(data.field, data.value);
 	    // Если поле — payment, обновляем состояние кнопок
