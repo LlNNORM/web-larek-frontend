@@ -1,4 +1,5 @@
 import './scss/styles.scss';
+//github не отследил измения названий файлов
 import { ShopApi } from './components/ShopApi';
 import { API_URL } from './utils/constants';
 import { EventEmitter, IEvents } from './components/base/events';
