@@ -32,7 +32,7 @@ export class Product<T> extends Component<T> {
         this.container.removeEventListener('click', this.clickHandler);
     }
 
-    set price(price:number) {
+    set price(price:number|null) {
         this.productPrice.textContent = formatNumber(price);
     }
 
