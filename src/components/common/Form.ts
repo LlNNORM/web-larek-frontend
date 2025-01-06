@@ -10,7 +10,7 @@ interface IFormState {
 export class Form<T> extends Component<IFormState> {
     protected _submit: HTMLButtonElement;
     protected _errors: HTMLElement;
-    protected paymentButtons:NodeListOf<HTMLButtonElement>;
+    protected paymentButtons?:NodeListOf<HTMLButtonElement>;
 
     constructor(protected container: HTMLFormElement, protected events: IEvents) {
         super(container);

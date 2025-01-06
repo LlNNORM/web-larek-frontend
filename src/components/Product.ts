@@ -1,13 +1,13 @@
 import { Component } from './base/Component';
 import { IEvents } from './base/events';
 import { CDN_URL } from '../utils/constants';
-import { formatNumber } from '../utils/utils';
+import { formatNumber, ensureElement } from '../utils/utils';
 
 export class Product<T> extends Component<T> {
 	protected events: IEvents;
-    protected productCategory: HTMLElement;
+    protected productCategory?: HTMLElement;
     protected productTitle: HTMLElement;
-	protected productImage: HTMLImageElement;
+	protected productImage?: HTMLImageElement;
     protected productPrice: HTMLDivElement;
 	protected productId: string;
     private clickHandler: () => void;
@@ -16,9 +16,10 @@ export class Product<T> extends Component<T> {
         super(container)
 		this.events = events;
         this.productCategory = this.container.querySelector('.card__category');
-        this.productTitle = this.container.querySelector('.card__title');
+        this.productTitle = ensureElement<HTMLElement>('.card__title', this.container);
 		this.productImage = this.container.querySelector('.card__image');
-        this.productPrice = this.container.querySelector('.card__price');
+        this.productPrice = ensureElement<HTMLDivElement>('.card__price', this.container);
+
         this.clickHandler = this.onClick(events);
 		this.container.addEventListener('click', this.clickHandler);
 	}

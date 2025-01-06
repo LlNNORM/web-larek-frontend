@@ -20,7 +20,6 @@ interface IPreviewActions {
 export class Preview extends Product<TProductInfo> {
     protected addToBasketButton: HTMLElement;
     protected productDescription: HTMLElement;
-    protected productPrice:HTMLDivElement;
 
     constructor(container: HTMLElement, actions: IPreviewActions) {
         super(container);
@@ -34,12 +33,10 @@ export class Preview extends Product<TProductInfo> {
     }
 
     set buttonState (changed:boolean) {
-        if (changed) {
-            this.addToBasketButton.textContent = 'Удалить из корзины'
-        }  else this.addToBasketButton.textContent = 'В корзину'
+        this.addToBasketButton.textContent = changed ? 'Удалить из корзины' : 'В корзину'
     }
 
-    set price(price:number) {
+    set price(price:number|null) {
         if (!price) this.setDisabled(this.addToBasketButton, true)
             else {
                 this.productPrice.textContent = formatNumber(price);

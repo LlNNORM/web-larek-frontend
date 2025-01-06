@@ -5,7 +5,7 @@
 Структура проекта:
 
 - src/ — исходные файлы проекта
-- src/components/ — папка с JS компонентами
+- src/components/ — папка с TS компонентами
 - src/components/base/ — папка с базовым кодом
 
 Важные файлы:
@@ -81,7 +81,7 @@ interface IShopAPI {
 	createOrder: (order: IOrder) => Promise<OrderResult>;
 }
 ```
-Интерфейс с дженериком для получения данных от API
+Тип с дженериком для получения данных от API
 
 ```typescript
 type ApiGetResponse<Type> = {
@@ -90,7 +90,7 @@ type ApiGetResponse<Type> = {
 };
 ```
 
-Интерфейс с дженериком для отправки заказа через API, в таком формате придет ответ от сервера
+Тип с дженериком для отправки заказа через API, в таком формате придет ответ от сервера
 
 ```typescript
 type ApiOrderResponse<Type> = {
@@ -123,16 +123,13 @@ interface IProductsData {
 ```typescript
 interface IOrderData extends IOrderForm{
 	order:IOrder;
-	counter:number;
-	increaseBasketCounter ():void;
-	decreaseBasketCounter ():void;
 	getBasketProducts():TBasketProductInfo[];
 	deleteBasketProduct(productId: string):void;
 	getBasketTotal ():number;
 	clearBasket ():void;
 	getOrderButtonState (productId: string):boolean;
-	setOrderField(field: keyof IOrderForm, value: string):void;
-	validateOrder():boolean;
+	setOrderField(field: keyof IOrderForm, value: string, fieldsToValidate?: Array<keyof IOrderForm>):void;
+	validateOrder(fieldsToValidate?: Array<keyof IOrderForm>):boolean;
 }
 ```
 
@@ -200,8 +197,8 @@ type TOrderCost= Pick<IOrder, 'total'>
 Класс отвечает за хранение и логику работы с данными товаров, пришедших с сервера. Имплементирует интерфейс IProductsData.\
 Конструктор класса принимает инстант брокера событий\
 В полях класса хранятся следующие данные:
-- _products: IProduct[] - массив объектов продуктов
-- _preview: string | null - id карточки, выбранной для просмотра в модальной окне
+- products: IProduct[] - массив объектов продуктов
+- previewId: string | null - id карточки, выбранной для просмотра в модальной окне
 - events: IEvents - экземпляр класса `EventEmitter` для инициации событий при изменении данных.
 
 Методы:
@@ -209,36 +206,26 @@ type TOrderCost= Pick<IOrder, 'total'>
 - а также сеттеры и геттеры для сохранения и получения данных из полей класса
 
 #### Класс OrderData
-Класс отвечает за хранение и логику работы с данными текущего пользователя. Имплементирует интерфейс IUser.\
+Класс отвечает за хранение и логику работы с данными текущего пользователя. Имплементирует интерфейс IOrder.\
 Конструктор класса принимает инстант брокера событий\
 В полях класса хранятся следующие данные:
 - _payment: string - Метод оплаты
 - _address: string - Адрес доставки
 - _email: string - Адрес электронной почты пользователя
 - _phone: string - Номер телефона пользователя
-- order: IOrder = {
-        payment: '',
-        address: '',
-        email: '',
-        phone: '',
-        items: [],
-        total: 0
-    };
-- _counter: number=0 - Счетчик товаров корзины.
-- _basketProducts: TBasketProductInfo[]=[] - Список товаров корзины.
-- formErrors: FormErrors = {} - Объект, содержащий ошибки валидации форм.
+- order: IOrder;
+- _basketProducts: TBasketProductInfo[] - Список товаров корзины.
+- formErrors: FormErrors - Объект, содержащий ошибки валидации форм.
 - events: IEvents - экземпляр класса `EventEmitter` для инициации событий при изменении данных.
 Методы:
-- checkValidation(data: Record<keyof IUser, string>): boolean - проверяет объект с данными пользователя на валидность
-- increaseBasketCounter () - увеличение счетчика корзины
-- decreaseBasketCounter () - уменьшение счетчика корзины
+
 - getBasketProducts() - получение продуктов, находящихся в корзине
 - deleteBasketProduct(productId: string) - удаление продукта из корзины
 - getBasketTotal () - получение полной стоимости корзины
 - clearBasket () - очистка корзины после успешного заказа
 - getOrderButtonState (productId: string) - получение состояния кнопки, находящейся в превью. Если false, то надпись `В корзину`, а если true, то `Удалить из корзины`
-- setOrderField(field: keyof IOrderForm, value: string) - устанавливает в модели данных полученные из форм значения полей заказа 
-- validateOrder() - валидация заказа, создает событие 'order:ready', если все поля форм валидны
+- setOrderField(field: keyof IOrderForm, value: string, fieldsToValidate?: Array<keyof IOrderForm>) - устанавливает в модели данных полученные из форм значения полей заказа 
+- validateOrder(fieldsToValidate?: Array<keyof IOrderForm>):void - проверяет формы на валидность
 - а также сеттеры для сохранения данных полей класса
 
 ### Классы представления
@@ -316,9 +303,8 @@ type TOrderCost= Pick<IOrder, 'total'>
 *События изменения данных (генерируются классами моделями данных)*
 - `products:changed` - изменение массива карточек товаров
 - `preview:changed` - изменение id, выбранной карточки в модели данных
-- `basket:changed` - изменение содержимого корзины, срабатывает при удалении карточки из корзины
+- `basket:changed` - изменение содержимого корзины, срабатывает при удалении товара из корзины, добавлении товара в корзину и при очистке корзины
 - `formErrors:changed` - изменение объекта, содержащего ошибки валидации формы
-- `order:ready` - успешная валидация обеих форм заказа
 
 *События, возникающие при взаимодействии пользователя с интерфейсом (генерируются классами, отвечающими за представление)*
 - `product:selected` - изменение открываемой в модальном окне картинки карточки
@@ -333,39 +319,3 @@ type TOrderCost= Pick<IOrder, 'total'>
 - `order.phone:changed` - изменение состояния ипута для номера мобильного телефона
 - `modal:open` - открытие модального окна
 - `modal:close` - закрытие модального окна
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

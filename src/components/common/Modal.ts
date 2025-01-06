@@ -18,7 +18,7 @@ export class Modal extends Component<IModalData> {
 
         this.closeButton.addEventListener('click', this.close.bind(this));
         //Это гарантирует, что клики внутри  контентной части модального окна теперь не вызовут его закрытие
-        this.container.addEventListener('click', (event) => {
+        this.container.addEventListener('mousedown', (event) => {
             if (event.target === this.container) {
                 this.close();
             }

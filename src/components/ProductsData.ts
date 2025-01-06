@@ -3,7 +3,7 @@ import { IProduct, IProductsData} from "../types";
 
 export class ProductsData implements IProductsData {
    protected _products: IProduct[];
-   protected _preview: string | null;
+   protected _previewId: string | null;
    protected events: IEvents;
    constructor(events: IEvents) {
     this.events = events;
@@ -22,19 +22,19 @@ export class ProductsData implements IProductsData {
         return this._products.find((item) => item.id === productId)
     }
 
-    set preview(productId: string | null) {
+    set previewId(productId: string | null) {
         if (!productId) {
-            this._preview = null;
+            this._previewId = null;
             return;
         }
         const selectedProduct = this.getProduct(productId);
         if (selectedProduct) {
-            this._preview = productId;
-            this.events.emit('preview:changed', { preview: this.preview })
+            this._previewId = productId;
+            this.events.emit('previewId:changed', { previewId: this.previewId })
         }
     }
 
-    get preview() {
-        return  this._preview;
+    get previewId() {
+        return  this._previewId;
     }
 }

@@ -2,7 +2,7 @@ import './scss/styles.scss';
 //github не отследил измения названий файлов
 import { ShopApi } from './components/ShopApi';
 import { API_URL } from './utils/constants';
-import { EventEmitter, IEvents } from './components/base/events';
+import { EventEmitter} from './components/base/events';
 import { ProductsData } from './components/ProductsData';
 import { Product } from './components/Product';
 import { cloneTemplate } from './utils/utils';
@@ -17,6 +17,7 @@ import { Basket } from './components/common/Basket';
 import { BasketProduct } from './components/common/BasketProduct';
 import { IOrderForm } from './types';
 import { OrderData } from './components/OrderData';
+import { TBasketProductInfo } from './types';
 
 const events = new EventEmitter();
 const api = new ShopApi(API_URL);
@@ -70,26 +71,24 @@ events.on('products:changed', () => {
 
 
 events.on('product:selected', ({productId}:{ productId: string }) => {
-  productsData.preview = productId;
+  productsData.previewId = productId;
 });
 
-events.on('preview:changed', ({preview}:{ preview: string })=> {
-	const productPreview = new Preview(cloneTemplate(previewTemplate), {
+events.on('previewId:changed', ({previewId}:{ previewId: string })=> {
+	const productForPreview = new Preview(cloneTemplate(previewTemplate), {
 		onClick: () => {
 			modal.close();
-			if (orderData.getBasketProducts().some(item => item.id === preview)) {
-				orderData.deleteBasketProduct(preview);
-				page.render({ counter: orderData.decreaseBasketCounter() })
+			if (orderData.getBasketProducts().some(item => item.id === previewId)) {
+				orderData.deleteBasketProduct(previewId);
 			} else {
-				const {id, title, price} = productsData.getProduct(preview);
-				const basketProduct = {id, title, price};
-				orderData.basketProducts = basketProduct;
-				page.render({ counter: orderData.increaseBasketCounter() });
+				const {id, title, price} = productsData.getProduct(previewId);
+				const newBasketProduct = {id, title, price};
+				orderData.addBasketProduct(newBasketProduct);
 			}
 		}
 	});
 	modal.render({
-		content: productPreview.render({...productsData.getProduct(preview), buttonState: orderData.getOrderButtonState(preview)})
+		content: productForPreview.render({...productsData.getProduct(previewId), buttonState: orderData.getOrderButtonState(previewId)})
 	});
 
 })
@@ -99,7 +98,7 @@ events.on('basket:open',()=> {
 			const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
 			return basketProduct.render({...item,index});
 		})
-		basket.total = orderData.getBasketTotal();
+
 		modal.render({
 			content: basket.render()
 		});
@@ -107,38 +106,42 @@ events.on('basket:open',()=> {
 
 events.on('product:delete', ({productId}:{ productId: string }) => {
 	orderData.deleteBasketProduct(productId);
-	basket.total = orderData.getBasketTotal();
-	page.render({ counter: orderData.decreaseBasketCounter() })
   });
 
-events.on('basket:changed', () => {
-	basket.items = orderData.getBasketProducts().map((item,index) => {
+events.on('basket:changed', ({basketProducts}:{basketProducts:TBasketProductInfo[]}) => {
+	basket.items = basketProducts.map((item,index) => {
 		const basketProduct = new BasketProduct(cloneTemplate(basketProductTemplate),events);
 		return basketProduct.render({...item,index});
 	})
-	basket.render()
+	const basketTotal = orderData.getBasketTotal();
+	basket.total = basketTotal;
+	page.render({ counter: basketProducts.length })
+	orderData.setOrderTotal(basketTotal);
   });
   
 
 events.on('order:open',()=> {
-
+	const {payment, address} = orderData.formErrors;
 		modal.render({
 			content: detailsForm.render({
-				payment:'',
-				address:'',
-				valid: false,
-				errors: []
+				payment:orderData.orderPayment,
+				address:orderData.orderAddress,
+				valid: !payment&&!address,
+				//Фильтр необходим для того,чтобы избавиться от undefined, что может появиться при отсутсвии ошибки в orderData
+				errors: [payment, address].filter(Boolean),
 			})
 		});
 })
 
 events.on('details:submit',()=> {
+	const {email, phone } = orderData.formErrors;
+
 	modal.render({
 		content: contactsForm.render({
-			phone: '',
-			email: '',
-			valid: false,
-			errors: []
+			phone:orderData.orderPhone,
+			email:orderData.orderEmail,
+			valid: !email && !phone,
+			errors: [email, phone ].filter(Boolean),
 		})
 	});
 
@@ -154,8 +157,7 @@ events.on('order:submit', () => {
 					
                 }
             });
-			orderData.counter=0
-			page.render({ counter: orderData.counter })
+			page.render({ counter: orderData.getBasketProducts().length })
 			orderData.clearBasket();
             modal.render({
                 content: success.render({total:result.total})
@@ -176,15 +178,14 @@ events.on('formErrors:changed', (errors: Partial<IOrderForm>) => {
 });
 
 // Изменилось одно из полей
-events.on(/^details|order\..*:changed/, (data: { field: keyof IOrderForm, value: string }) => {
-	if (data) {
-        orderData.setOrderField(data.field, data.value);
+events.on(/^details\..*:changed/, (data: { field: keyof IOrderForm, value: string }) => {
+        orderData.setOrderField(data.field, data.value, ['payment', 'address']);
 	    // Если поле — payment, обновляем состояние кнопок
-		if (data.field === 'payment') {
-			detailsForm.payment = data.value; // Устанавливаем активное состояние кнопок
-		}
-    }
-    
+		data.field === 'payment' ? detailsForm.payment = data.value : undefined; // Устанавливаем активное состояние кнопок
+});
+
+events.on(/^order\..*:changed/, (data: { field: keyof IOrderForm, value: string }) => {
+        orderData.setOrderField(data.field, data.value, ['email', 'phone']);
 });
 
 // Блокируем прокрутку страницы если открыта модалка
