@@ -157,7 +157,6 @@ events.on('order:submit', () => {
 					
                 }
             });
-			page.render({ counter: orderData.getBasketProducts().length })
 			orderData.clearBasket();
             modal.render({
                 content: success.render({total:result.total})
